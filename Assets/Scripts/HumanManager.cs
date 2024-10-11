@@ -1,10 +1,6 @@
-using Cinemachine;
-using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class HumanManager : MonoBehaviour
 {
@@ -14,60 +10,56 @@ public class HumanManager : MonoBehaviour
     [SerializeField] Vector2 spawnAreaMin, spawnAreaMax;
     [SerializeField] Vector2 forbiddenAreaMin, forbiddenAreaMax;
 
-    Human[] humans;
-
     [SerializeField] int humansToSpawn;
-
     [SerializeField] public int humansHit = 0;
-
- 
 
     public int spawnWaveAmount = 5;
     int totalHumansToSpawnThisLevel;
 
+
+    [SerializeField] float spawnDelay = 0.1f;
     private void Start()
     {
-       StartCoroutine( SpawnHumans(spawnWaveAmount));
+        totalHumansToSpawnThisLevel = spawnWaveAmount * humansToSpawn;
 
-       totalHumansToSpawnThisLevel = spawnWaveAmount * humansToSpawn;
-
-       
-    }
-
-
-   
-
-    IEnumerator SpawnHumans(int o)
-    {
-        for(int a = 0; a < o; a++)
+        // Instantiate all the humans at the start, but keep them inactive.
+        for (int i = 0; i < totalHumansToSpawnThisLevel; i++)
         {
-            print("wave number " + (a + 1) );
-
-            for (int i = 0; i < humansToSpawn; i++)
-            {
-                yield return new WaitForSeconds(0.5f);
-                SpawnInPlace();
-            }
+            Human newHuman = Instantiate(humanPrefab, GetValidSpawnPosition(), Quaternion.identity, this.gameObject.transform);
+            newHuman.gameObject.SetActive(false); // Keep them inactive initially
+            humanList.Add(newHuman); // Add them to the list
         }
 
-
-       
-   
+        // Start spawning humans in waves
+        StartCoroutine(SpawnHumans());
     }
 
-    private void SpawnInPlace()
+    IEnumerator SpawnHumans()
     {
-        Vector2 randomPosition = GetValidSpawnPosition();
+        // Loop over the number of waves
+        for (int wave = 0; wave < spawnWaveAmount; wave++)
+        {
+            print("Wave number " + (wave + 1));
 
-        // Spawn a human at the valid random position
-      Human newHuman =  Instantiate(humanPrefab, randomPosition, Quaternion.identity, this.gameObject.transform);
-        humanList.Add(newHuman);
-    }
+            // Calculate the starting and ending index for the current wave
+            int startIndex = wave * humansToSpawn;
+            int endIndex = Mathf.Min(startIndex + humansToSpawn, humanList.Count); // Ensure we don't exceed the list size
 
-    IEnumerator SpawnHumansSlowly()
-    {
-        yield return new WaitForSeconds(1);
-        SpawnInPlace();
+            // Spawn the required number of humans for this wave
+            for (int i = startIndex; i < endIndex; i++)
+            {
+                // Set a new valid spawn position for each human
+                humanList[i].transform.position = GetValidSpawnPosition();
+
+                // Activate the human
+                humanList[i].gameObject.SetActive(true);
+
+                yield return new WaitForSeconds(spawnDelay); // Delay between spawns
+            }
+
+            // Wait before starting the next wave
+            yield return new WaitForSeconds(2.0f);
+        }
     }
 
     Vector2 GetValidSpawnPosition()
@@ -95,4 +87,3 @@ public class HumanManager : MonoBehaviour
                position.y > forbiddenAreaMin.y && position.y < forbiddenAreaMax.y;
     }
 }
-
