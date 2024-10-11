@@ -1,3 +1,4 @@
+using Cinemachine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,9 +12,13 @@ public class Driver : MonoBehaviour
 
     Rigidbody2D rb;
 
+   [SerializeField] CinemachineVirtualCamera cam;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        cam.m_Lens.OrthographicSize = 15.64f;
+        print(cam.m_Lens.OrthographicSize);
     }
 
     private void Update()
@@ -31,9 +36,28 @@ public class Driver : MonoBehaviour
             currentSpeed = Mathf.MoveTowards(currentSpeed, 0, decelerationRate);
         }
 
-
+        if (Input.GetKeyDown(KeyCode.UpArrow)) 
+        {
+            cam.m_Lens.OrthographicSize += 5;
+        }
+        if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            cam.m_Lens.OrthographicSize -= 5;
+        }
 
         transform.Rotate(0, 0, -steerAmount);
         transform.Translate(0, forwardAmount, 0);
+    }
+
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(this.transform.position, 10);
+    }
+
+    private void OnApplicationQuit()
+    {
+        cam.m_Lens.OrthographicSize = 15.64f;
     }
 }
